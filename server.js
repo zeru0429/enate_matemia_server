@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
 
 //users selection
 app.get('/users', (req, res) => {
-    const SQLquery='select *from users'
+    const SQLquery='SELECT * FROM users INNER JOIN profile ON users.id = profile.user_id'
     connection.query(SQLquery,(error,results,fields)=>{
         //res.json(results)
         if(error) console.log(error);
@@ -46,9 +46,59 @@ app.get('/users', (req, res) => {
    
   });
 
+//adding new user
+app.post("/addNewUser", (req, res) => {
+  const form = req.body.form;
+  if (!form) {
+    res.status(400).send("Bad request");
+    return;
+  } else {
+    const { f_name, m_name, l_name, phone, role, profile, username, password, c_password } = form;
+    let user_id;
+
+    let query = "INSERT INTO `users`(`username`, `password`, `role`) VALUES (?, ?, ?);";
+    let query2 = "INSERT INTO `profile`(`user_id`, `f_name`, `m_name`, `l_name`, `phone`, `image_url`) VALUES (?, ?, ?, ?, ?, ?);";
+
+    connection.query(query, [username, password, role], (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Error occurred during insertion");
+      } else {
+        user_id = results.insertId;
+        connection.query(query2, [user_id, f_name, m_name, l_name, phone, profile], (err, results, fields) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send("Error occurred during insertion");
+          } else {
+            res.send(results);
+          }
+        });
+      }
+    });
+  }
+});
+  
+//delete user
+
+
+
+
   //products selection
   app.get('/products', (req, res) => {
     const SQLquery='select *from products'
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        
+        res.send(results);
+    })
+   
+  });
+
+
+//products selection
+  app.get('/price', (req, res) => {
+    const SQLquery='select home_price,out_price from products'
     connection.query(SQLquery,(error,results,fields)=>{
         //res.json(results)
         if(error) console.log(error);
