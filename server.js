@@ -81,26 +81,26 @@ app.post("/addNewUser", (req, res) => {
 //delete user
 app.delete('/deleteUser/:id', (req, res) => {
   const userId = req.params.id;
-  console.log(req.body);
   // Delete the related records from the `profile` table first
-  // const profileQuery = 'DELETE FROM `profile` WHERE `user_id` = ?';
-  // connection.query(profileQuery, [userId], (err, results, fields) => {
-  //   if (err) {
-  //     console.log(err);
-  //     res.status(404).send("Error occurred during deletion");
-  //   } else {
-  //     // If the deletion from the `profile` table was successful, delete the user record from the `users` table
-  //     const userQuery = 'DELETE FROM `users` WHERE `id` = ?';
-  //     connection.query(userQuery, [userId], (err, results, fields) => {
-  //       if (err) {
-  //         console.log(err);
-  //         res.status(404).send("Error occurred during deletion");
-  //       } else {
-  //         res.send("Deletion successful");
-  //       }
-  //     });
-  //   }
-  // });
+  const profileQuery = 'DELETE FROM `profile` WHERE `user_id` = ?';
+  connection.query(profileQuery, [userId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(404).send("Error occurred during deletion");
+    } else {
+      // If the deletion from the `profile` table was successful, delete the user record from the `users` table
+      const userQuery = 'DELETE FROM `users` WHERE `id` = ?';
+      connection.query(userQuery, [userId], (err, results, fields) => {
+        if (err) {
+          console.log(err);
+          res.status(404).send("Error occurred during deletion");
+        } else {
+          res.send("Deletion successful");
+          console.log("Deletion successful");
+        }
+      });
+    }
+  });
 });
 
 
