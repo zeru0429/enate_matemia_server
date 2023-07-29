@@ -79,7 +79,7 @@ app.post("/addNewUser", (req, res) => {
 });
   
 //delete user
-app.delete('/deleteUser/:id', (req, res) => {
+app.delete('/deleteusers/:id', (req, res) => {
   const userId = req.params.id;
   // Delete the related records from the `profile` table first
   const profileQuery = 'DELETE FROM `profile` WHERE `user_id` = ?';
@@ -129,6 +129,23 @@ app.delete('/deleteUser/:id', (req, res) => {
    
   });
 
+// delete product /deleteproducts/
+app.delete('/deleteproducts/:id', (req, res) => {
+  const userId = req.params.id;
+  // Delete the related records from the `orders` table first
+  const ordersQuery = 'DELETE FROM `products` WHERE `id` = ?';
+  connection.query(ordersQuery, [userId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(404).send("Error occurred during deletion");
+    } else {
+      // If the deletion from the `orders` table was successful
+      res.send("Deletion successful");
+      console.log("Deletion successful");
+    }
+  });
+});
+
   //orders selection
   app.get('/orders', (req, res) => {
     const SQLquery='select *from orders'
@@ -139,6 +156,25 @@ app.delete('/deleteUser/:id', (req, res) => {
     })
    
   });
+
+//delete order /deleteorders/
+app.delete('/deleteorders/:id', (req, res) => {
+  const userId = req.params.id;
+  // Delete the related records from the `orders` table first
+  const ordersQuery = 'DELETE FROM `orders` WHERE `id` = ?';
+  connection.query(ordersQuery, [userId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(404).send("Error occurred during deletion");
+    } else {
+      // If the deletion from the `orders` table was successful
+      res.send("Deletion successful");
+      console.log("Deletion successful");
+    }
+  });
+});
+
+
 
 //daly paiyed 
 app.get('/day', (req, res) => {
