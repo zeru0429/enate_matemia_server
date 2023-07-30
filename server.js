@@ -5,16 +5,11 @@ import mysql from 'mysql2'
 
 //constants
 const port = 8190;
-const ip = '192.168.1.11';
+const ip = '192.168.1.6';
 
 // Set up a MySQL database connection pool
 const connection = mysql.createConnection({
-  ////Free MySQL Hosting
-  // host: 'sql7.freemysqlhosting.net',
-  // port: '3306',
-  // user: "sql7636185",
-  // password: "RPJ7CEKBk8",
-  // database: "sql7636185",
+  
 
  // //FreeDB Free Database Panel
   // host: 'sql.freedb.tech',
@@ -61,7 +56,7 @@ app.get('/', (req, res) => {
 
 //users selection
 app.get('/users', (req, res) => {
-    const SQLquery='SELECT * FROM users INNER JOIN profile ON users.id = profile.user_id'
+    const SQLquery='SELECT users.id,users.username,users.password,users.role,profile.f_name,profile.m_name,profile.phone,profile.image_url FROM users INNER JOIN profile ON users.id = profile.user_id'
     connection.query(SQLquery,(error,results,fields)=>{
         //res.json(results)
         if(error) console.log(error);
@@ -194,7 +189,7 @@ app.delete('/deleteproducts/:id:name', (req, res) => {
   });
 
 //delete order /deleteorders/
-app.delete('/deleteorders/:id', (req, res) => {
+app.delete('/deleteorders/:id:name', (req, res) => {
   const userId = req.params.id;
   // Delete the related records from the `orders` table first
   const ordersQuery = 'DELETE FROM `orders` WHERE `id` = ?';
@@ -236,6 +231,8 @@ app.get('/day', (req, res) => {
     })
    
   });
+
+
   // Month paiyed 
   app.get('/MONTH', (req, res) => {
     const SQLquery="SELECT SUM(paid_price) AS total_paid_price FROM orders WHERE YEAR(date_of_order) = YEAR('2023-07-23') AND MONTH(date_of_order) = MONTH('2023-07-23')"
@@ -248,8 +245,51 @@ app.get('/day', (req, res) => {
    
   });
 
-  
+  //UPDATE `orders `SET `status` = 'completed' WHERE `id` = [order_id];
 //completed orederas
+
+//Operator
+ app.get('/completed-oreder', (req, res) => {
+    const SQLquery="select *from orders where status='completed' order by date_of_order asc"
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        res.json(results);
+    })
+   
+ });
+  
+//not completed orders
+ app.get('/not-completed-oreder', (req, res) => {
+    const SQLquery="select *from orders where status !='completed'order by status desc, date_of_order asc"
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        res.json(results);
+    })
+   
+  });
+
+//update completed the  orders
+//http://192.168.1.6:8190/updatenot-completed-oreder/2
+app.put('/updatenot-completed-oreder/:id', (req, res) => {
+  const orderId = req.params.id;
+  const newStatus = req.body.status;
+  const updateQuery = "UPDATE `orders` SET `status` = ? WHERE `id` = ?";
+ 
+  connection.query(updateQuery, [newStatus, orderId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send("Error occurred during update");
+    } else if (results.affectedRows === 0) {
+      res.status(404).send(`Order ${orderId} not found`);
+    } else {
+      console.log(`Order ${orderId} updated successfully`);
+      res.send(`Order ${orderId} updated successfully`);
+    }
+  });
+});
+
 
 
 
