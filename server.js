@@ -19,6 +19,7 @@ const connection = mysql.createConnection({
   database: "enate",
 
 })
+
 connection.connect((error) => {
   if (error) console.error(error);
   else {

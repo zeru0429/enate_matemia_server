@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Add Product</title>
+    <style>
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Add Product</h1>
+    <form id="addForm" enctype="multipart/form-data">
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            <span id="nameError" class="error"></span>
+        </div>
+        <div>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" required></textarea>
+            <span id="descriptionError" class="error"></span>
+        </div>
+        <div>
+            <label for="profile">Image:</label>
+            <input type="file" id="profile" name="profile">
+        </div>
+        <div>
+            <button type="submit">Add Product</button>
+        </div>
+    </form>
+
+    <script>
+        function validateForm() {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+
+            let isValid = true;
+
+            if (name.trim() === '') {
+                document.getElementById('nameError').textContent = 'Name is required';
+                isValid = false;
+            } else {
+                document.getElementById('nameError').textContent = '';
+            }
+
+            if (description.trim() === '') {
+                document.getElementById('descriptionError').textContent = 'Description is required';
+                isValid = false;
+            } else {
+                document.getElementById('descriptionError').textContent = '';
+            }
+
+            return isValid;
+        }
+
+        document.getElementById('addForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            if (validateForm()) {
+                const formData = new FormData(this);
+
+                fetch('http://localhost:8100/addNewproducts/', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('New product added');
+                            // Handle success
+                        } else {
+                            console.error('Error adding new product');
+                            // Handle error
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error adding new product:', error);
+                        // Handle error
+                    });
+            }
+        });
+    </script>
+</body>
+
+</html>
