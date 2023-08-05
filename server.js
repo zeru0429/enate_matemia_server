@@ -321,7 +321,7 @@ app.get('/day', (req, res) => {
   //UPDATE `orders `SET `status` = 'completed' WHERE `id` = [order_id];
 //completed orederas
 
-//Operator
+//selecting  Operator
  app.get('/completed-oreder', (req, res) => {
     const SQLquery="select *from orders where status='completed' order by date_of_order asc"
     connection.query(SQLquery,(error,results,fields)=>{
@@ -332,7 +332,7 @@ app.get('/day', (req, res) => {
    
  });
   
-//not completed orders
+// selecting not completed orders
  app.get('/not-completed-oreder', (req, res) => {
     const SQLquery="select *from orders where status !='completed'order by status desc, date_of_order asc"
     connection.query(SQLquery,(error,results,fields)=>{

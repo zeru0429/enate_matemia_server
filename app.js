@@ -108,17 +108,7 @@ app.get('/', (req, res) => {
   });
 
 
-//products selection
-  app.get('/price', (req, res) => {
-    const SQLquery='select *from products'
-    connection.query(SQLquery,(error,results,fields)=>{
-        //res.json(results)
-        if(error) console.log(error);
-        
-        res.send(results);
-    })
-   
-  });
+
 
 // delete product /deleteproducts/
 
@@ -134,17 +124,7 @@ app.get('/', (req, res) => {
 
 
 
-// select all users
-app.get('/users', (req, res) => {
-    const SQLquery='SELECT users.id,users.username,users.password,users.role,profile.f_name,profile.m_name,profile.phone,profile.image_url FROM users INNER JOIN profile ON users.id = profile.user_id'
-    connection.query(SQLquery,(error,results,fields)=>{
-        //res.json(results)
-        if(error) console.log(error);
-        
-        res.json(results);
-    })
-   
-  });
+
 
   //adding new user
 app.post("/addNewUser", upload.single('profile'), (req, res) => {
@@ -177,6 +157,82 @@ app.post("/addNewUser", upload.single('profile'), (req, res) => {
   }
 });
 
+
+
+//-------------------- SELECTing  ---------------------------//
+
+// select all users
+app.get('/users', (req, res) => {
+    const SQLquery='SELECT users.id,users.username,users.password,users.role,profile.f_name,profile.m_name,profile.phone,profile.image_url FROM users INNER JOIN profile ON users.id = profile.user_id'
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        
+        res.json(results);
+    })
+   
+  });
+
+//select price of all products
+  app.get('/price', (req, res) => {
+    const SQLquery='select *from products'
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        
+        res.send(results);
+    })
+   
+  });
+
+   //products selection
+  app.get('/products', (req, res) => {
+    const SQLquery='select *from products'
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        
+        res.send(results);
+    })
+   
+  });
+
+
+//selection All orders
+  app.get('/orders', (req, res) => {
+    const SQLquery='select *from orders'
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        res.json(results);
+    })
+   
+  });
+//selecting  completed orders
+ app.get('/completed-oreder', (req, res) => {
+    const SQLquery="select *from orders where status='completed' order by date_of_order asc"
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        res.json(results);
+    })
+   
+ });
+  
+// selecting not completed orders
+ app.get('/not-completed-oreder', (req, res) => {
+    const SQLquery="select *from orders where status !='completed'order by status desc, date_of_order asc"
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        res.json(results);
+    })
+   
+  });
+
+
+
+//-------------X----------- SELECTing  ----------------X--------//
 app.listen(port, ip, () => {
   console.log(`Server is running on http://${ip}:${port}`);
 });
