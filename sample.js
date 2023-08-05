@@ -1,123 +1,3 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import mysql from 'mysql2'
-import session from 'express-session';
-import cookieParser from 'cookie-parser';
-//constants
-const port = 8100;
-// const ip= 'http://192.168.1.2'
- const ip = 'localhost';
-
-// Set up a MySQL database connection pool
-const connection = mysql.createConnection({
-  ////localhost
-  host: 'localhost',
-  port: '3333',
-  user: "root",
-  password: "1234",
-  database: "enate",
-
-})
-connection.connect((error) => {
-  if (error) console.error(error);
-  else {
-    console.log("db Connected sucessfully");
-  }
-});
-
-
-
-
-// Set up an Express app
-const app = express();
-
-// Use middleware to parse incoming HTTP request bodies
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser())
-app.use(express.json())
-app.use(session({
-  key:  'userId',
-  secret: 'enatmatemiya',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false,
-    maxAge: 60*60*24
-  }
-}));
-
-// Use middleware to enable CORS in your app
-app.use(cors({
-  origin: '*',
-  methods: ['POST', 'GET'],
-  credentials: true
-}));
-
-
-//geting authentication
-app.get('/session', (req, res) => { 
-  console.log(req.session.username);
-  if (req.session.username) {
-    return res.json({valid: true, username: req.session.username})
-  }
-  else { 
-    return res.json({valid: false})
-
-  }
-
-})
-
-
-//login api
-
-// Define login API endpoint
-app.post('/login', async (req, res) => {
-  const { username, pass } = req.body;
-  // Check if username and password are provided
-  if (!username || !pass) {
-    return res.status(400).json({ status: 'error', message: 'Username and password are required' });
-  }
-
-  // Query MySQL database for user with matching username
-  const query = 'SELECT * FROM users WHERE username = ?';
-  connection.query(query, [username], (error, results, fields) => {
-    if (error) {
-      console.log('Error querying database:', error);
-      return res.status(500).json({ status: 'error', message: 'Internal server error' });
-    }
-
-    if (results.length === 0) {
-      // No user found with matching username
-      return res.json({ status: 'error', message: 'Invalid username or password' });
-    }
-
-    // Compare password with hash using bcrypt
-    const user = results[0];
-    if (user.password !== pass) {
-      return res.json({ status: 'error', message: 'Invalid password' });
-  
-    }
-    else { 
-          
-
-      //console.log({ status: 'success', message: 'success',role: user.role, username:user.username});
-      req.session.username = user.username;
-      // console.log(req.session.username);
-       console.log(req.session.username );
-      return res.status(200).json({ status: 'success', message: 'successfully log in', role: user.role, username:  req.session.username });
-      
-
-    }
-   
-  });
-});
-
-
-
-
-
 
 
 
@@ -363,11 +243,65 @@ app.put('/updatenot-completed-oreder/:id', (req, res) => {
 });
 
 
+//geting authentication
+app.get('/session', (req, res) => { 
+  console.log(req.session.username);
+  if (req.session.username) {
+    return res.json({valid: true, username: req.session.username})
+  }
+  else { 
+    return res.json({valid: false})
+
+  }
+
+})
 
 
-// Start the server and listen on port 3000
-app.listen(port,ip ,() => {
-  console.log(`Server listening on http://${ip}:${port}`);
+//login api
+
+// Define login API endpoint
+app.post('/login', async (req, res) => {
+  const { username, pass } = req.body;
+  // Check if username and password are provided
+  if (!username || !pass) {
+    return res.status(400).json({ status: 'error', message: 'Username and password are required' });
+  }
+
+  // Query MySQL database for user with matching username
+  const query = 'SELECT * FROM users WHERE username = ?';
+  connection.query(query, [username], (error, results, fields) => {
+    if (error) {
+      console.log('Error querying database:', error);
+      return res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+
+    if (results.length === 0) {
+      // No user found with matching username
+      return res.json({ status: 'error', message: 'Invalid username or password' });
+    }
+
+    // Compare password with hash using bcrypt
+    const user = results[0];
+    if (user.password !== pass) {
+      return res.json({ status: 'error', message: 'Invalid password' });
+  
+    }
+    else { 
+      //console.log({ status: 'success', message: 'success',role: user.role, username:user.username});
+      const sessionToken = uuid.v4()
+      const expireAt = new Data().setFullYear()
+      req.session.username = user.username;
+      console.log(req.session.username);
+      console.log(req.session);
+      return res.status(200).json({ status: 'success', message: 'successfully log in', role: user.role, username:  req.session.username });
+      
+
+    }
+   
+  });
 });
+
+
+
 
 
