@@ -11,6 +11,7 @@ const port = 8100;
 const ip = 'localhost';
 const app = express();
 
+app.use(express.static('uploads'))
 app.use(cors());
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -44,6 +45,8 @@ connection.connect((err) => {
   }
   console.log('Connected to the database as ID: ' + connection.threadId);
 });
+
+// adding new products
 
 app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
   const {
@@ -83,6 +86,15 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
   );
 });
 
+
+//geting authentication
+app.get('/', (req, res) => { 
+  
+ res.end("<h1>req.session.username</h1>")
+})
+
+
+
   //products selection
   app.get('/products', (req, res) => {
     const SQLquery='select *from products'
@@ -98,7 +110,7 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
 
 //products selection
   app.get('/price', (req, res) => {
-    const SQLquery='select home_price,out_price from products'
+    const SQLquery='select *from products'
     connection.query(SQLquery,(error,results,fields)=>{
         //res.json(results)
         if(error) console.log(error);
@@ -109,33 +121,61 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
   });
 
 // delete product /deleteproducts/
-app.delete('/deleteproducts/:id:name', (req, res) => {
-  const productId = req.params.id;
-  const productName = req.params.name;
-  console.log(req.params);
-  // Delete the related records from the `orders` table first
-  const ordersQuery = "DELETE FROM `orders` WHERE `product_name` = ?";
-  connection.query(ordersQuery, [productName], (err, results, fields) => {
-    if (err) {
-      console.log(err);
-      res.status(404).send("Error occurred during deletion");
-    } else {
-      // If the deletion from the `orders` table was successful
-      const productsQuery = 'DELETE FROM `products` WHERE `id` = ?';
-      connection.query(productsQuery, [productId], (err, results, fields) => {
-        if (err) {
-          console.log(err);
-          res.status(404).send("Error occurred during deletion");
-        } else {
-          res.send("Deletion successful");
-          console.log("Deletion successful");
-        }
-      });
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// select all users
+app.get('/users', (req, res) => {
+    const SQLquery='SELECT users.id,users.username,users.password,users.role,profile.f_name,profile.m_name,profile.phone,profile.image_url FROM users INNER JOIN profile ON users.id = profile.user_id'
+    connection.query(SQLquery,(error,results,fields)=>{
+        //res.json(results)
+        if(error) console.log(error);
+        
+        res.json(results);
+    })
+   
   });
+
+  //adding new user
+app.post("/addNewUser", upload.single('profile'), (req, res) => {
+  const form = req.body;
+  if (!form) {
+    res.status(400).send("Bad request");
+    return;
+  } else {
+    const { f_name, m_name, l_name, phone, role, username, password, c_password } = form;
+    let user_id;
+    const image = req.file;
+    let query = "INSERT INTO `users`(`username`, `password`, `role`) VALUES (?, ?, ?);";
+    connection.query(query, [username, password, role], (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Error occurred during insertion");
+      } else {
+        user_id = results.insertId;
+        let query2 = "INSERT INTO `profile`(`user_id`, `f_name`, `m_name`, `l_name`, `phone`, `image_url`) VALUES (?, ?, ?, ?, ?, ?);";
+        connection.query(query2, [user_id, f_name, m_name, l_name, phone, image.path], (err, results, fields) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send("Error occurred during insertion");
+          } else {
+            res.send(results);
+          }
+        });
+      }
+    });
+  }
 });
-
-
 
 app.listen(port, ip, () => {
   console.log(`Server is running on http://${ip}:${port}`);
