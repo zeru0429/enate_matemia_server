@@ -5,19 +5,24 @@ import mysql from 'mysql2';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import { v4 as uuidv4 } from 'uuid';
+import  jwt, { decode }  from 'jsonwebtoken';
 import multer from 'multer';
 
 const port = 8100;
 const ip = 'localhost';
 const app = express();
 
-app.use(express.static('uploads'))
-app.use(cors());
-app.use(bodyParser.json());
-app.use(cookieParser());
+app.use(cors(
+  {
+    origin: ["http://localhost:3000"],
+    methods: ["POST", "GET"],
+    credentials: true
+  }
+));
+app.use(express.static('uploads'));
 app.use(express.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(cookieParser());
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -46,45 +51,82 @@ connection.connect((err) => {
   console.log('Connected to the database as ID: ' + connection.threadId);
 });
 
-// adding new products
+//------------------LOGIN ----------------//
+app.post('/login', async (req, res) => {
+  const { username, pass } = req.body;
+  // Check if username and password are provided
+  if (!username || !pass) {
+    return res.status(400).json({ status: 'error', message: 'Username and password are required' });
+  }
 
-app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
-  const {
-    product_name,
-    measurement_units,
-    kind_of_product,
-    home_price,
-    out_price
-  } = req.body;
-  const image = req.file;
-
-  // Process the uploaded image as needed
-  console.log('Uploaded image:', image);
-
-  // Save the product details to the database
-  const sql =
-    'INSERT INTO products (`product_name`, `kind_of_product`, `measurement_units`, `image_url`, `home_price`, `out_price`, `date_of_update`) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  connection.query(
-    sql,
-    [
-      product_name,
-      kind_of_product,
-      measurement_units,
-      image.path, // Assuming you want to save the image path in the database
-      home_price,
-      out_price,
-      new Date() // Assuming `date_of_update` is a timestamp field
-    ],
-    (err, result) => {
-      if (err) {
-        console.error('Error adding new product: ' + err);
-        res.status(500).json({ error: 'Failed to add new product' });
-        return;
-      }
-      res.json({ success: true });
+  // Query MySQL database for user with matching username
+  const query = 'SELECT * FROM users WHERE username = ?';
+  connection.query(query, [username], (error, results, fields) => {
+    if (error) {
+      console.log('Error querying database:', error);
+      return res.status(500).json({ status: 'error', message: 'Internal server error' });
     }
-  );
+
+    if (results.length === 0) {
+      // No user found with matching username
+      return res.json({ status: 'error', message: 'username not exist ' });
+    }
+
+    // Compare password with hash using bcrypt
+    const user = results[0];
+    if (user.password !== pass) {
+      return res.json({ status: 'error', message: 'Invalid password' });
+  
+    }
+    else {      
+      const token = jwt.sign({ username }, 'zerubabel-secret-key', { expiresIn: '1m' });
+      res.cookie('token',token)
+       return res.status(200).json({ status: 'success', message: 'successfully log in', role: user.role, username:  user.username });
+      
+
+    }
+   
+  });
 });
+
+
+
+//check login status
+const verifyUser = (req,res,next) => { 
+  const token = req.cookies.token;
+  if (!token) {
+    return res.json({ message: "no tooken so logout" })
+  }
+  else { 
+    jwt.verify(token, 'zerubabel-secret-key', (error, decode) => { 
+      if (error) { return res.json({ message: 'authentication error' }) }
+      else {
+        req.username = decode.username;
+        next();
+      }
+
+    })
+  }
+
+
+}
+
+app.get('/logincheck',verifyUser, (req, res) => { 
+return res.json({ status: 'success',username: req.username })
+})
+
+// logout functionality
+app.get('/logout',(req, res)=> {
+  res.clearCookie('token')
+  return res.json({status: 'success'})
+})
+
+
+
+
+//------X-----------LOGIN -------X--------//
+
+
 
 
 //geting authentication
@@ -96,7 +138,7 @@ app.get('/', (req, res) => {
 
 
   //products selection
-  app.get('/products', (req, res) => {
+  app.get('/productsrrrr', (req, res) => {
     const SQLquery='select *from products'
     connection.query(SQLquery,(error,results,fields)=>{
         //res.json(results)
@@ -126,40 +168,135 @@ app.get('/', (req, res) => {
 
 
 
+
+
+//-------------------- INSERTING ---------------------------//
+
+//add new order
+app.post('/addNewOrder', (req, res) => { 
+  const form = req.body; 
+  if (!form) {
+    res.status(400).send("Bad request");
+    return;
+  }
+  const {
+  product_name,
+  type_of_order,
+  state_of_order,
+  amount,
+  paid_price,
+  fullname,
+  phone,
+  kind_of_product
+}
+    = form;
+  const total_price = amount * 20
+  const remain_price = total_price - paid_price;
+  const date_of_order = Date.now("YYYY-MM-DD HH:mm:ss")
+  // res.send(form);
+  // console.log(form);
+  
+let query = "INSERT INTO `orders`(product_name,type_of_order,state_of_order,amount,paid_price,name,phone,kind_of_product,total_price,remain_price,date_of_order) VALUES (?,?,?,?, ?, ?,?, ?, ?,?,NOW())";
+  connection.query(query, [ product_name,type_of_order,
+  state_of_order, amount,
+  paid_price,fullname,
+  phone,kind_of_product,total_price,remain_price,date_of_order], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send("Error occurred during insertion");
+    } else { 
+       res.send(results);
+    }
+  }
+  )
+
+
+
+})
+
+
   //adding new user
-app.post("/addNewUser", upload.single('profile'), (req, res) => {
+app.post("/addNewusers", upload.single('profile'), (req, res) => {
   const form = req.body;
   if (!form) {
     res.status(400).send("Bad request");
     return;
   } else {
-    const { f_name, m_name, l_name, phone, role, username, password, c_password } = form;
+    
+
+    const { f_name, m_name, l_name, phone, role, username, password, c_password,profile} = form;
     let user_id;
     const image = req.file;
+    console.log(f_name, m_name, l_name, phone, role, username, password, c_password);
+    console.log(image);
+    console.log(profile);
     let query = "INSERT INTO `users`(`username`, `password`, `role`) VALUES (?, ?, ?);";
-    connection.query(query, [username, password, role], (err, results, fields) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send("Error occurred during insertion");
-      } else {
-        user_id = results.insertId;
-        let query2 = "INSERT INTO `profile`(`user_id`, `f_name`, `m_name`, `l_name`, `phone`, `image_url`) VALUES (?, ?, ?, ?, ?, ?);";
-        connection.query(query2, [user_id, f_name, m_name, l_name, phone, image.path], (err, results, fields) => {
-          if (err) {
-            console.log(err);
-            res.status(500).send("Error occurred during insertion");
-          } else {
-            res.send(results);
-          }
-        });
-      }
-    });
+    // connection.query(query, [username, password, role], (err, results, fields) => {
+    //   if (err) {
+    //     console.log(err);
+    //     res.status(500).send("Error occurred during insertion");
+    //   } else {
+    //     user_id = results.insertId;
+    //     let query2 = "INSERT INTO `profile`(`user_id`, `f_name`, `m_name`, `l_name`, `phone`, `image_url`) VALUES (?, ?, ?, ?, ?, ?);";
+    //     connection.query(query2, [user_id, f_name, m_name, l_name, phone, image.path], (err, results, fields) => {
+    //       if (err) {
+    //         console.log(err);
+    //         res.status(500).send("Error occurred during insertion");
+    //       } else {
+    //         res.send(results);
+    //       }
+    //     });
+    //   }
+    // });
   }
 });
 
 
+// adding new products
 
-//-------------------- SELECTing  ---------------------------//
+app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
+  const {
+    product_name,
+    measurement_units,
+    kind_of_product,
+    home_price,
+    out_price
+  } = req.body;
+  const image = req.file;
+
+  // Process the uploaded image as needed
+  console.log('Uploaded image:', image);
+
+  // Save the product details to the database
+  const sql =
+    'INSERT INTO products (`product_name`, `kind_of_product`, `measurement_units`, `image_url`, `home_price`, `out_price`, `date_of_update`) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  // connection.query(
+  //   sql,
+  //   [
+  //     product_name,
+  //     kind_of_product,
+  //     measurement_units,
+  //     image.path, // Assuming you want to save the image path in the database
+  //     home_price,
+  //     out_price,
+  //     new Date() // Assuming `date_of_update` is a timestamp field
+  //   ],
+  //   (err, result) => {
+  //     if (err) {
+  //       console.error('Error adding new product: ' + err);
+  //       res.status(500).json({ error: 'Failed to add new product' });
+  //       return;
+  //     }
+  //     res.json({ success: true });
+  //   }
+  // );
+});
+
+
+//--------X---------- INSERTING --------------X------------//
+
+
+//-------------------- SELECTING ---------------------------//
 
 // select all users
 app.get('/users', (req, res) => {
@@ -230,9 +367,10 @@ app.get('/users', (req, res) => {
    
   });
 
-
-
 //-------------X----------- SELECTing  ----------------X--------//
+
+
+
 app.listen(port, ip, () => {
   console.log(`Server is running on http://${ip}:${port}`);
 });
