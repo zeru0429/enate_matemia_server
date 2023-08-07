@@ -295,8 +295,25 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
 });
 
 
+
+
 //--------X---------- INSERTING --------------X------------//
 
+
+//--------X---------- UPDATING --------------X------------//
+app.post('/addNewchange_password/', (req, res) => { 
+  const form = req.body;
+  console.log(form);
+ // res.send("")
+})
+
+app.post('/addNewupdateProfile/', (req, res) => { 
+  console.log(req.body);
+  
+})
+
+
+//------------------ UPDATING  -------------------------//
 
 //-------------------- SELECTING ---------------------------//
 
@@ -385,6 +402,7 @@ WHERE username='${username}';`;
   })
 })
 //-------------X----------- SELECTing  ----------------X--------//
+
 
 
 
