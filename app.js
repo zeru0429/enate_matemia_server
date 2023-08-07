@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import mysql from 'mysql2';
@@ -112,7 +112,20 @@ const verifyUser = (req,res,next) => {
 }
 
 app.get('/logincheck',verifyUser, (req, res) => { 
-return res.json({ status: 'success',username: req.username })
+  const query = 'SELECT role FROM users WHERE username = ?';
+  connection.query(query, [req.username], (error, results, fields) => {
+      if (error) {
+        console.log('Error querying database:', error);
+        return res.status(500).json({ status: 'error', message: 'Internal server error' });
+      }
+      else {
+        const role = results[0].role
+        console.log(role);
+      
+    return res.json({ status: 'success',username: req.username,role:role })
+      }
+})
+
 })
 
 // logout functionality
@@ -134,22 +147,6 @@ app.get('/', (req, res) => {
   
  res.end("<h1>req.session.username</h1>")
 })
-
-
-
-  //products selection
-  app.get('/productsrrrr', (req, res) => {
-    const SQLquery='select *from products'
-    connection.query(SQLquery,(error,results,fields)=>{
-        //res.json(results)
-        if(error) console.log(error);
-        
-        res.send(results);
-    })
-   
-  });
-
-
 
 
 // delete product /deleteproducts/
@@ -229,8 +226,8 @@ app.post("/addNewusers", upload.single('profile'), (req, res) => {
     const { f_name, m_name, l_name, phone, role, username, password, c_password} = form;
     let user_id;
    
-    console.log(f_name, m_name, l_name, phone, role, username, password, c_password);
-    console.log(image);
+    // console.log(f_name, m_name, l_name, phone, role, username, password, c_password);
+    // console.log(image);
  
     let query = "INSERT INTO `users`(`username`, `password`, `role`) VALUES (?, ?, ?);";
     connection.query(query, [username, password, role], (err, results, fields) => {
