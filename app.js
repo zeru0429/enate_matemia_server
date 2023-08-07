@@ -369,6 +369,21 @@ app.get('/users', (req, res) => {
    
   });
 
+
+// selecting profile 
+app.get('/profile/:name', (req, res) => {
+  const username = req.params.name;
+  const SQLquery = `SELECT users.username, users.role, profile.f_name, profile.m_name, profile.l_name, profile.phone, profile.image_url
+FROM users
+INNER JOIN profile ON users.id = profile.user_id
+WHERE username='${username}';`;
+  console.log(username);
+  connection.query(SQLquery, (error, results, fields) => {
+    //res.json(results)
+    if (error) console.log(error);
+    res.json(results);
+  })
+})
 //-------------X----------- SELECTing  ----------------X--------//
 
 
