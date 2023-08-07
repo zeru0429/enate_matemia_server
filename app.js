@@ -218,36 +218,38 @@ let query = "INSERT INTO `orders`(product_name,type_of_order,state_of_order,amou
   //adding new user
 app.post("/addNewusers", upload.single('profile'), (req, res) => {
   const form = req.body;
+  
   if (!form) {
     res.status(400).send("Bad request");
     return;
   } else {
+    console.log(form);
     
-
-    const { f_name, m_name, l_name, phone, role, username, password, c_password,profile} = form;
+ const image = req.file;
+    const { f_name, m_name, l_name, phone, role, username, password, c_password} = form;
     let user_id;
-    const image = req.file;
+   
     console.log(f_name, m_name, l_name, phone, role, username, password, c_password);
     console.log(image);
-    console.log(profile);
+ 
     let query = "INSERT INTO `users`(`username`, `password`, `role`) VALUES (?, ?, ?);";
-    // connection.query(query, [username, password, role], (err, results, fields) => {
-    //   if (err) {
-    //     console.log(err);
-    //     res.status(500).send("Error occurred during insertion");
-    //   } else {
-    //     user_id = results.insertId;
-    //     let query2 = "INSERT INTO `profile`(`user_id`, `f_name`, `m_name`, `l_name`, `phone`, `image_url`) VALUES (?, ?, ?, ?, ?, ?);";
-    //     connection.query(query2, [user_id, f_name, m_name, l_name, phone, image.path], (err, results, fields) => {
-    //       if (err) {
-    //         console.log(err);
-    //         res.status(500).send("Error occurred during insertion");
-    //       } else {
-    //         res.send(results);
-    //       }
-    //     });
-    //   }
-    // });
+    connection.query(query, [username, password, role], (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Error occurred during insertion");
+      } else {
+        user_id = results.insertId;
+        let query2 = "INSERT INTO `profile`(`user_id`, `f_name`, `m_name`, `l_name`, `phone`, `image_url`) VALUES (?, ?, ?, ?, ?, ?);";
+        connection.query(query2, [user_id, f_name, m_name, l_name, phone, image.filename], (err, results, fields) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send("Error occurred during insertion");
+          } else {
+            res.send(results);
+          }
+        });
+      }
+    });
   }
 });
 
@@ -270,26 +272,26 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
   // Save the product details to the database
   const sql =
     'INSERT INTO products (`product_name`, `kind_of_product`, `measurement_units`, `image_url`, `home_price`, `out_price`, `date_of_update`) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  // connection.query(
-  //   sql,
-  //   [
-  //     product_name,
-  //     kind_of_product,
-  //     measurement_units,
-  //     image.path, // Assuming you want to save the image path in the database
-  //     home_price,
-  //     out_price,
-  //     new Date() // Assuming `date_of_update` is a timestamp field
-  //   ],
-  //   (err, result) => {
-  //     if (err) {
-  //       console.error('Error adding new product: ' + err);
-  //       res.status(500).json({ error: 'Failed to add new product' });
-  //       return;
-  //     }
-  //     res.json({ success: true });
-  //   }
-  // );
+  connection.query(
+    sql,
+    [
+      product_name,
+      kind_of_product,
+      measurement_units,
+      image.filename, // Assuming you want to save the image path in the database
+      home_price,
+      out_price,
+      new Date() // Assuming `date_of_update` is a timestamp field
+    ],
+    (err, result) => {
+      if (err) {
+        console.error('Error adding new product: ' + err);
+        res.status(500).json({ error: 'Failed to add new product' });
+        return;
+      }
+      res.json({ success: true });
+    }
+  );
 });
 
 
