@@ -15,7 +15,7 @@ const app = express();
 app.use(cors(
   {
     origin: ["http://localhost:3000"],
-    methods: ["POST", "GET"],
+    methods: ["POST", "GET","DELETE","PUT"],
     credentials: true
   }
 ));
@@ -425,6 +425,77 @@ WHERE username='${username}';`;
 
 
 
+//------------------- DELETE --------------------------//
+
+//delete users
+app.delete('/deleteusers/:id', (req, res) => {
+  const userId = req.params.id;
+  // Delete the related records from the `profile` table first
+  const profileQuery = 'DELETE FROM `profile` WHERE `user_id` = ?';
+  connection.query(profileQuery, [userId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(404).send("Error occurred during deletion");
+    } else {
+      // If the deletion from the `profile` table was successful, delete the user record from the `users` table
+      const userQuery = 'DELETE FROM `users` WHERE `id` = ?';
+      connection.query(userQuery, [userId], (err, results, fields) => {
+        if (err) {
+          console.log(err);
+          res.status(404).send("Error occurred during deletion");
+        } else {
+          res.send("Deletion successful");
+          console.log("Deletion successful");
+        }
+      });
+         }
+  });
+});
+//delete Orders
+app.delete('/deleteorders/:id', (req, res) => {
+  const userId = req.params.id;
+  // Delete the related records from the `orders` table first
+  const ordersQuery = 'DELETE FROM `orders` WHERE `id` = ?';
+  console.log(userId);
+  connection.query(ordersQuery, [userId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(404).send("Error occurred during deletion");
+    } else {
+      // If the deletion from the `orders` table was successful
+      res.send("Deletion successful");
+      console.log("Deletion successful");
+    }
+  });
+});
+
+//delete Products
+app.delete('/deleteproducts/:id', (req, res) => {
+  const productId = req.params.id;
+  console.log(productId);
+  // Delete the related records from the `orders` table first
+  const ordersQuery = "DELETE FROM `orders` WHERE `id` = ?";
+  connection.query(ordersQuery, [productId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(404).send("Error occurred during deletion");
+    } else {
+      // If the deletion from the `orders` table was successful
+      const productsQuery = 'DELETE FROM `products` WHERE `id` = ?';
+      connection.query(productsQuery, [productId], (err, results, fields) => {
+        if (err) {
+          console.log(err);
+          res.status(404).send("Error occurred during deletion");
+        } else {
+          res.send("Deletion successful");
+          console.log("Deletion successful");
+        }
+      });
+    }
+  });
+});
+
+//--------X---------- DELETE --------------X------------//
 
 app.listen(port, ip, () => {
   console.log(`Server is running on http://${ip}:${port}`);
