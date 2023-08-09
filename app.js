@@ -322,9 +322,89 @@ app.post('/update-not-completed-order/:id', (req, res) => {
 
 
 app.post('/addNewchange_password/', (req, res) => { 
-  const form = req.body;
-  console.log(form);
- // res.send("")
+  const { curent_password, password,c_password } = req.body[0];
+  const username = req.body[1];
+  const role = req.body[2]
+  //console.log(curent_password,password,c_password,username,role);
+  const query = 'UPDATE users SET password = ? WHERE username = ?'
+  const queryPrev = 'SELECT password from users WHERE username = ?'
+  //validate the confim password
+  connection.query(queryPrev, [username], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(401).send("incorrect current password");
+    }
+    else {
+      if (!results[0].password) {
+        res.send("incorrect current no user is found");
+      }
+      else { 
+        if (results[0].password !== curent_password) {
+          res.send("incorrect current password");
+          console.log("incorrect current password");
+        }
+        else {
+          connection.query(query, [password, username], (err, results, fields) => {
+            if (err) {
+              console.log(err);
+              res.status(401).send("Error occurred during updating password");
+            } else {
+              res.send(results);
+              console.log(results);
+            }
+          })
+          
+
+        }
+
+      }
+      
+      // res.send(results)
+    }
+  
+  }
+  )
+
+     //  connection.query(queryPrev, [curent_password], (err, results, fields) => {
+  //    if (err) {
+  //      console.log(err);
+  //      res.status(500).send("incorrect current password");
+  //    }
+  //    else { 
+  //      res.send(results)
+  //    }
+        //     else {
+        //         if (password === c_password) {
+        //         connection.query(query, [password, username], (err, results, fields) => {
+        //     if (err) {
+        //       console.log(err);
+        //       res.status(500).send("Error occurred during updating password");
+        //     } else {
+        //       res.send(results);
+        //     }
+        //   }
+        //   )
+
+        // }
+        // else { 
+        //   res.status(500).send("Error the new password does not much")
+        // }
+
+              
+
+        //     }
+          // }
+          // ) 
+
+
+
+      
+
+
+
+
+
+  
 })
 
 app.post('/addNewupdateProfile/', (req, res) => { 
