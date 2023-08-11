@@ -4,6 +4,32 @@ import { connection } from './db.js'
 import { upload} from './multer.js'
 import { app} from './express.js'
 
+import fs from 'fs';
+import createCsvWriter from 'csv-writer';
+// Rest of the code...
+import cron from 'node-cron';
+import nodemailer from 'nodemailer';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 connection.connect((err) => {
   if (err) {
@@ -559,6 +585,147 @@ app.post('/api/orders', (req, res) => {
   });
 });
 
-//////////////////////////////////////////
 
+/// -------------------- Email Service ------------------////
+//////////////////////////////////////////////////////////////
 
+// Function to fetch daily orders from the database
+const fetchDailyOrders = async () => {
+  const today = new Date().toISOString().split('T')[0];
+const query = `SELECT * FROM orders WHERE DATE(date_of_order) = '${today}'`;
+  console.log(query);
+
+  return new Promise((resolve, reject) => {
+    connection.query(query, (error, results) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+};
+
+// Function to convert the orders data to CSV format
+const convertToCSV = async (data) => {
+  const csvFilePath = 'daily_orders.csv';
+
+  try {
+    const csvWriter = createCsvWriter.createObjectCsvWriter({
+      path: csvFilePath,
+      header: [
+        { id: 'id', title: 'ID' },
+        { id: 'product_id', title: 'product_id' },
+        { id: 'type_of_order', title: 'type_of_order' },
+        { id: 'state_of_order', title: 'state_of_order' },
+        { id: 'amount', title: 'amount' },
+        { id: 'total_price', title: 'total_price' },
+         { id: 'paid_price', title: 'paid_price' },
+        { id: 'remain_price', title: 'remain_price' },
+        { id: 'status', title: 'status' },
+        { id: 'phone', title: 'phone' },
+        { id: 'full_name', title: 'full_name' },
+        { id: 'casher_name', title: 'casher_name' },
+        { id: 'date_of_order', title: 'date_of_order' },
+      ],
+    });
+
+    await csvWriter.writeRecords(data);
+
+    return csvFilePath;
+  } catch (error) {
+    console.error('Error converting data to CSV:', error);
+    throw error;
+  }
+};
+
+// Function to send email with the CSV file attachment
+const sendEmailWithAttachment = async (csvFilePath) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'mihiretuhailegiyorgis@gmail.com',
+        pass: 'bpvwkysosrlkltpw',
+      },
+    });
+
+    const mailOptions = {
+      from: 'mihiretuhailegiyorgis@gmail.com',
+      to: 'mihiretutigistu@gmail.com',
+      subject: 'Daily Orders Report',
+      text: 'Attached is the daily orders report CSV file.',
+      attachments: [
+        {
+          filename: 'daily_orders.csv',
+          path: csvFilePath,
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully!');
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
+};
+
+// Function to calculate and store daily analysis
+const calculateAndStoreDailyAnalysis = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const query = `SELECT SUM(total_price) AS total_credits, SUM(paid_price) AS total_gain, SUM(remain_price) AS total_remaining FROM orders`;
+
+    return new Promise((resolve, reject) => {
+      connection.query(query, (error, results) => {
+        if (error) {
+          reject(error);
+        } else {
+          const { total_credits, total_gain, total_remaining } = results[0];
+
+          const insertQuery = `INSERT INTO analysis (date, total_credits, total_gain, total_remaining) VALUES ('${today}', ${total_credits}, ${total_gain}, ${total_remaining})`;
+
+          connection.query(insertQuery, (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error storing daily analysis:', error);
+    throw error;
+  }
+};
+
+// Schedule the task to run every 1 minute
+setInterval(async () => {
+  console.log('Running daily orders report task...');
+
+  try {
+    // Fetch daily orders from the database
+    const dailyOrders = await fetchDailyOrders();
+
+    // Convert the orders data to CSV format
+    const csvFilePath = await convertToCSV(dailyOrders);
+
+    // Send email with the CSV file attachment
+    await sendEmailWithAttachment(csvFilePath);
+
+    // Delete the CSV file after sending the email
+    fs.unlinkSync(csvFilePath);
+
+    // Calculate and store daily analysis
+    await calculateAndStoreDailyAnalysis();
+
+    console.log('Daily orders report task completed!');
+  } catch (error) {
+    console.error('Error executing daily orders report task:', error);
+  }
+}, 60000*60*4); // Run every 1 minute (60000 milliseconds) *60min *4 hour
+///////////////////////////////////////////////////////////////
+/// ----X--------------- Email Service --------X---------////
