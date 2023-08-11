@@ -1,47 +1,9 @@
-import express, { response } from 'express';
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import mysql from 'mysql2';
-import session from 'express-session';
-import cookieParser from 'cookie-parser';
 import { v4 as uuidv4 } from 'uuid';
 import  jwt, { decode }  from 'jsonwebtoken';
-import multer from 'multer';
+import { connection } from './db.js'
+import { upload} from './multer.js'
+import { app} from './express.js'
 
-const port = 8100;
-const ip = 'localhost';
-const app = express();
-
-app.use(cors(
-  {
-    origin: ["http://localhost:3000"],
-    methods: ["POST", "GET","DELETE","PUT"],
-    credentials: true
-  }
-));
-app.use(express.static('uploads'));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cookieParser());
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now();
-    cb(null, uniqueSuffix + file.originalname);
-  }
-});
-
-const upload = multer({ storage: storage });
-
-const connection = mysql.createConnection({
-  host: 'localhost',
-  port: '3333',
-  user: 'root',
-  password: '1234',
-  database: 'enate',
-});
 
 connection.connect((err) => {
   if (err) {
@@ -348,45 +310,6 @@ app.post('/addNewchange_password/', (req, res) => {
   }
   )
 
-     //  connection.query(queryPrev, [curent_password], (err, results, fields) => {
-  //    if (err) {
-  //      console.log(err);
-  //      res.status(500).send("incorrect current password");
-  //    }
-  //    else { 
-  //      res.send(results)
-  //    }
-        //     else {
-        //         if (password === c_password) {
-        //         connection.query(query, [password, username], (err, results, fields) => {
-        //     if (err) {
-        //       console.log(err);
-        //       res.status(500).send("Error occurred during updating password");
-        //     } else {
-        //       res.send(results);
-        //     }
-        //   }
-        //   )
-
-        // }
-        // else { 
-        //   res.status(500).send("Error the new password does not much")
-        // }
-
-              
-
-        //     }
-          // }
-          // ) 
-
-
-
-      
-
-
-
-
-
   
 })
 
@@ -639,7 +562,3 @@ app.post('/api/orders', (req, res) => {
 //////////////////////////////////////////
 
 
-
-app.listen(port, ip, () => {
-  console.log(`Server is running on http://${ip}:${port}`);
-});
