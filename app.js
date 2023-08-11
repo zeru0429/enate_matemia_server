@@ -149,23 +149,6 @@ app.get('/', (req, res) => {
 })
 
 
-// delete product /deleteproducts/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //-------------------- INSERTING ---------------------------//
 
@@ -297,12 +280,12 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
 //--------X---------- INSERTING --------------X------------//
 
 
-//--------X---------- UPDATING --------------X------------//
+//------------------ UPDATING --------------------------//
 //update completed the  orders
 app.post('/update-not-completed-order/:id', (req, res) => {
   const orderId = req.params.id;
   const newStatus = req.body.status.status;
-  res.send("hihi")
+  //res.send("hihi")
   const updateQuery = "UPDATE orders SET status = ? WHERE id = ?";
   //console.log(newStatus);
   connection.query(updateQuery, [newStatus, orderId], (err, results, fields) => {
@@ -416,7 +399,7 @@ app.post('/addNewupdateProfile/', upload.single('profile'), (req, res) => {
 })
 
 
-//------------------ UPDATING  -------------------------//
+//----------X----------- UPDATING  --------------X----------//
 
 //-------------------- SELECTING ---------------------------//
 
@@ -504,6 +487,7 @@ WHERE username='${username}';`;
     res.json(results);
   })
 })
+
 //-------------X----------- SELECTing  ----------------X--------//
 
 
@@ -579,6 +563,82 @@ app.delete('/deleteproducts/:id', (req, res) => {
 });
 
 //--------X---------- DELETE --------------X------------//
+
+
+////////////////////////////////////////////
+
+
+app.get('/api/subdivisions', (req, res) => {
+  connection.query('SELECT * FROM subdivisions', (error, results) => {
+    if (error) {
+      console.error('Error retrieving subdivisions:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+app.get('/api/product', (req, res) => {
+  connection.query('SELECT * FROM product', (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+app.post('/api/product', (req, res) => {
+  const { name, description } = req.body;
+
+  // Insert the product into the database
+  connection.query(
+    'INSERT INTO product (name, description) VALUES (?, ?)',
+    [name, description],
+    (error, results) => {
+      if (error) {
+        console.error('Error creating product:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      } else {
+        res.json({ message: 'Product created successfully' });
+      }
+    }
+  );
+});
+
+app.post('/api/orders', (req, res) => {
+  const { customerId, productId, quantity } = req.body;
+
+  // Check if the product exists
+  connection.query('SELECT * FROM product WHERE id = ?', [productId], (error, results) => {
+    if (error) {
+      console.error('Error checking product:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    } else if (results.length === 0) {
+      res.status(400).json({ error: 'Product not found' });
+    } else {
+      // Insert the order into the database
+      connection.query(
+        'INSERT INTO orders (customerId, productId, quantity) VALUES (?, ?, ?)',
+        [customerId, productId, quantity],
+        (error, results) => {
+          if (error) {
+            console.error('Error creating order:', error);
+            res.status(500).json({ error: 'Internal server error' });
+          } else {
+            res.json({ message: 'Order created successfully' });
+          }
+        }
+      );
+    }
+  });
+});
+
+//////////////////////////////////////////
+
+
 
 app.listen(port, ip, () => {
   console.log(`Server is running on http://${ip}:${port}`);
