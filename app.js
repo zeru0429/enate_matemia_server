@@ -299,23 +299,23 @@ app.post('/addNewproducts/', upload.single('profile'), (req, res) => {
 
 //--------X---------- UPDATING --------------X------------//
 //update completed the  orders
-//         /updatenot-completed-oreder:4
 app.post('/update-not-completed-order/:id', (req, res) => {
   const orderId = req.params.id;
-  const newStatus = req.body.status;
+  const newStatus = req.body.status.status;
+  res.send("hihi")
   const updateQuery = "UPDATE orders SET status = ? WHERE id = ?";
-  console.log(orderId);
-  // connection.query(updateQuery, [newStatus, orderId], (err, results, fields) => {
-  //   if (err) {
-  //     console.log(err);
-  //     res.status(500).send("Error occurred during update");
-  //   } else if (results.affectedRows === 0) {
-  //     res.status(404).send(`Order ${orderId} not found`);
-  //   } else {
-  //     console.log(`Order ${orderId} updated successfully`);
-  //     res.send(`Order ${orderId} updated successfully`);
-  //   }
-  // });
+  //console.log(newStatus);
+  connection.query(updateQuery, [newStatus, orderId], (err, results, fields) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send("Error occurred during update");
+    } else if (results.affectedRows === 0) {
+      res.status(404).send(`Order ${orderId} not found`);
+    } else {
+      console.log(`Order ${orderId} updated successfully`);
+      res.send(`Order ${orderId} updated successfully`);
+    }
+  });
 });
 
 
@@ -407,8 +407,11 @@ app.post('/addNewchange_password/', (req, res) => {
   
 })
 
-app.post('/addNewupdateProfile/', (req, res) => { 
-  console.log(req.body);
+app.post('/addNewupdateProfile/', upload.single('profile'), (req, res) => { 
+  const image = req.profile;
+  //console.log(req.body);
+  console.log(image );
+
   
 })
 
