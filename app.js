@@ -159,18 +159,29 @@ app.post('/addNeworders/', (req, res) => {
   total_price = parseFloat(total_price)
   paid_price = parseFloat(paid_price)
   remain_price = parseFloat(remain_price)
-
+  let status;
   //console.log(paid_price);
 
    const SQLquery='select id from products where product_name=?'
-  connection.query(SQLquery, [product_name], (error, results, fields) => {
+  connection.query(SQLquery, [product_name],async (error, results, fields) => {
        //res.json(results)
     if (error) console.log(error);
   //  console.log( results[0].id);
     if (results) { 
       product_id = results[0].id;
       const Query = "INSERT INTO `orders` (`product_id`, `kind_of_product`, `type_of_order`, `state_of_order`, `amount`, `total_price`, `paid_price`,`remain_price`, `status`, `phone`, `full_name`, `casher_name`, `date_of_order`) VALUES (?,?,?,?, ?, ?,?, ?, ?,?,?,?,?)";
-      const status = 'ordered'
+     if (state_of_order === 'urgent') {
+        const pendingCount = await getNumbersOfPendingStatus();
+        console.log(pendingCount);
+        if (pendingCount > 5) {
+          status = 'ordered';
+        } else {
+          status = 'pending';
+        }
+      } else {
+        status = 'ordered';
+      }
+      
       if (type_of_order == 'home_price') { 
         type_of_order = 'home_made';
       }
@@ -178,9 +189,7 @@ app.post('/addNeworders/', (req, res) => {
         type_of_order = 'printing'
         
        }
-      
-
-      //console.log(type_of_order);
+     
       const date_of_order =new Date().toISOString().slice(0, 19).replace("T", " ")
       connection.query(Query, [ product_id, kind_of_product, type_of_order, state_of_order, amount, total_price, paid_price, remain_price, status, phone, fullname, casher_name, date_of_order], (err, results, fields) => {
         if (err) {
@@ -201,37 +210,6 @@ app.post('/addNeworders/', (req, res) => {
     })
     
      
-
-
-  /*
-   insert into  product_id, kind_of_product, type_of_order, state_of_order, amount, total_price, paid_price, remain_price, status, phone, full_name, casher_name, date_of_order
- 
-   "INSERT INTO `orders`(product_name,type_of_order,state_of_order,amount,paid_price,name,phone,kind_of_product,total_price,remain_price,date_of_order) VALUES (?,?,?,?, ?, ?,?, ?, ?,?,NOW())";
-   */
-  
-  
-  
-//   const total_price = amount * 20
-//   const remain_price = total_price - paid_price;
-//   const date_of_order = Date.now("YYYY-MM-DD HH:mm:ss")
-//   // res.send(form);
-//   // console.log(form);
-  
-// let query = "INSERT INTO `orders`(product_name,type_of_order,state_of_order,amount,paid_price,name,phone,kind_of_product,total_price,remain_price,date_of_order) VALUES (?,?,?,?, ?, ?,?, ?, ?,?,NOW())";
-//   connection.query(query, [ product_name,type_of_order,
-//   state_of_order, amount,
-//   paid_price,fullname,
-//   phone,kind_of_product,total_price,remain_price,date_of_order], (err, results, fields) => {
-//     if (err) {
-//       console.log(err);
-//       res.status(500).send("Error occurred during insertion");
-//     } else { 
-//        res.send(results);
-//     }
-//   }
-//   )
-
-
 
 })
 
@@ -336,6 +314,7 @@ app.post('/update-not-completed-order/:id', (req, res) => {
     } else if (results.affectedRows === 0) {
       res.status(404).send(`Order ${orderId} not found`);
     } else {
+      updateStatusOfOther();
       console.log(`Order ${orderId} updated successfully`);
       res.send(`Order ${orderId} updated successfully`);
     }
@@ -782,3 +761,24 @@ setInterval(async () => {
 }, 60000*60*4); // Run every 1 minute (60000 milliseconds) *60min *4 hour
 ///////////////////////////////////////////////////////////////
 /// ----X--------------- Email Service --------X---------////
+
+//function to 
+async function getNumbersOfPendingStatus() {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT COUNT(*) AS pending_count FROM orders WHERE status = 'pending'";
+    connection.query(sql, (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        reject(error);
+        return;
+      }
+      resolve(parseInt(results[0].pending_count));
+    });
+  });
+}
+
+
+function updateStatusOfOther() { 
+  return 0;
+}
+
