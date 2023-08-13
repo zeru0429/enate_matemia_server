@@ -4,11 +4,11 @@ import cors from 'cors';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 const port = 8100;
-const ip = '192.168.1.250';
+const ip = 'localhost';
 
 export const app = express();
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.1.250:3000'],
+  origin: ['http://192.168.1.250:3000','http://localhost:3000',],
   methods: ["POST", "GET", "DELETE", "PUT"],
   credentials: true
 }));
