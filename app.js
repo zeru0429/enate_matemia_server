@@ -520,28 +520,33 @@ app.delete('/deleteorders/:id', (req, res) => {
 //delete Products
 app.delete('/deleteproducts/:id', (req, res) => {
   const productId = req.params.id;
-  console.log(productId);
-  // Delete the related records from the `orders` table first
-  const ordersQuery = "DELETE FROM `orders` WHERE `id` = ?";
-  connection.query(ordersQuery, [productId], (err, results, fields) => {
+
+  // Delete the related orders first
+  const ordersQuery = "DELETE FROM `orders` WHERE `product_id` = ?";
+  connection.query(ordersQuery, [productId], (err, orderResults) => {
     if (err) {
       console.log(err);
-      res.status(404).send("Error occurred during deletion");
+      res.status(500).send("Error occurred during deletion");
     } else {
-      // If the deletion from the `orders` table was successful
+      // Now that related orders are deleted, delete the product
       const productsQuery = 'DELETE FROM `products` WHERE `id` = ?';
-      connection.query(productsQuery, [productId], (err, results, fields) => {
+      connection.query(productsQuery, [productId], (err, productResults) => {
         if (err) {
           console.log(err);
-          res.status(404).send("Error occurred during deletion");
+          res.status(500).send("Error occurred during deletion");
         } else {
-          res.send("Deletion successful");
-          console.log("Deletion successful");
+          if (orderResults.affectedRows > 0 || productResults.affectedRows > 0) {
+            res.send("Deletion successful");
+            console.log("Deletion successful");
+          } else {
+            res.status(404).send("Product not found");
+          }
         }
       });
     }
   });
 });
+
 
 //--------X---------- DELETE --------------X------------//
 
@@ -791,4 +796,33 @@ async function updateStatusOfOther() {
   
   return true;
 }
+
+////////////////////   data section ///////////////////
+app.get('/userStat', (req, res) => { 
+  const SQLquery = "SELECT SUM(CASE WHEN role = 'super' THEN 1 ELSE 0 END) AS super_users_count, SUM(CASE WHEN role = 'casher' THEN 1 ELSE 0 END) AS cashers_count, SUM(CASE WHEN role = 'operator' THEN 1 ELSE 0 END) AS operators_count, SUM(CASE WHEN role = 'guest' THEN 1 ELSE 0 END) AS guests_count FROM users; "
+   connection.query(SQLquery, (error, results, fields) => {
+    //res.json(results)
+    if (error) console.log(error);
+    res.json(results);
+  })
+})
+
+app.get('/orderStat', (req, res) => { 
+  const SQLquery ="SELECT 'Completed Any Time' AS order_status, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS count FROM orders UNION ALL SELECT    'Not Completed Any Time' AS order_status, SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) AS count FROM orders UNION ALL SELECT  'Completed Today' AS order_status, SUM(CASE WHEN status = 'completed' AND DATE(date_of_order) = CURDATE() THEN 1 ELSE 0 END) AS count FROM orders UNION ALL SELECT 'Not Completed Today' AS order_status, SUM(CASE WHEN status != 'completed' AND DATE(date_of_order) = CURDATE() THEN 1 ELSE 0 END) AS count FROM orders;"
+  
+    connection.query(SQLquery, (error, results, fields) => {
+    //res.json(results)
+    if (error) console.log(error);
+    res.json(results);
+  })
+})
+
+
+/*
+
+
+*/
+
+
+
 
