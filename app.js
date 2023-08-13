@@ -172,7 +172,7 @@ app.post('/addNeworders/', (req, res) => {
       const Query = "INSERT INTO `orders` (`product_id`, `kind_of_product`, `type_of_order`, `state_of_order`, `amount`, `total_price`, `paid_price`,`remain_price`, `status`, `phone`, `full_name`, `casher_name`, `date_of_order`) VALUES (?,?,?,?, ?, ?,?, ?, ?,?,?,?,?)";
      if (state_of_order === 'urgent') {
         const pendingCount = await getNumbersOfPendingStatus();
-        console.log(pendingCount);
+       // console.log(pendingCount);
         if (pendingCount > 5) {
           status = 'ordered';
         } else {
@@ -323,7 +323,7 @@ app.post('/update-not-completed-order/:id', (req, res) => {
 
 
 
-
+//chage password
 app.post('/addNewchange_password/', (req, res) => { 
   const { curent_password, password,c_password } = req.body[0];
   const username = req.body[1];
@@ -778,7 +778,17 @@ async function getNumbersOfPendingStatus() {
 }
 
 
-function updateStatusOfOther() { 
-  return 0;
+async function updateStatusOfOther() { 
+  const pendingCount = await getNumbersOfPendingStatus();
+  if (pendingCount < 5) { 
+    const sql = "UPDATE orders SET status = 'pending' WHERE status = 'ordered' ORDER BY date_of_order ASC LIMIT 1;"
+    connection.query(sql, (error, results, fields) => {
+      if (error) {
+        console.error(error);
+      }
+    });
+  }
+  
+  return true;
 }
 
