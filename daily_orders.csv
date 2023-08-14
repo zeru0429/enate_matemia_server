@@ -1,2 +1,2 @@
-ID,product_id,type_of_order,state_of_order,amount,total_price,paid_price,remain_price,status,phone,full_name,casher_name,date_of_order
+ID,Product ID,Kind of Product,Type of Order,State of Order,Amount,Total Price,Paid Price,Remaining Price,Status,Phone,Full Name,Cashier Name,Date of Order
 

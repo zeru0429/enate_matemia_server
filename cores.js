@@ -28,7 +28,11 @@ app.get('/', (req, res) => {
   res.send("<h1>hi there</h1>");
 })
 //------------------LOGIN ----------------//
-
+//logout
+app.get('/logout',(req, res)=> {
+  res.clearCookie('token')
+  return res.json({status: 'success'})
+})
 //check login status
 const verifyUser = (req,res,next) => { 
   const token = req.cookies.token;
@@ -77,6 +81,7 @@ app.post('/login', async (req, res) => {
 
       // Set CORS headers for this response based on the incoming request's origin
       res.setHeader("Access-Control-Allow-Origin", req.get('origin'));
+      res.setHeader("Access-Control-Allow-Credentials", "true");
 
       return res.status(200).json({ status: 'success', message: 'successfully log in', role: user.role, username: user.username });
     }
@@ -94,8 +99,8 @@ app.get('/logincheck', verifyUser, (req, res) => {
         const role = results[0].role;
         
         // Set CORS headers for this response based on the incoming request's origin
-        res.setHeader("Access-Control-Allow-Origin", req.get('origin'));
-        
+         res.setHeader("Access-Control-Allow-Origin", req.get('origin'));
+        res.setHeader("Access-Control-Allow-Credentials", "true");
         return res.json({ status: 'success', username: req.username, role: role });
       }
   });
@@ -103,6 +108,6 @@ app.get('/logincheck', verifyUser, (req, res) => {
 
 //------X-----------LOGIN -------X--------//
 
-app.listen(port, ip, () => {
+app.listen(port, () => {
   console.log(`Server is running on http://${ip}:${port}`);
 });

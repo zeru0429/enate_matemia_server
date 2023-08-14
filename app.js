@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import  jwt, { decode }  from 'jsonwebtoken';
 import { connection } from './db.js'
 import { upload} from './multer.js'
-import { app} from './express.js'
+import { app} from './cores.js'
 
 import fs from 'fs';
 import createCsvWriter from 'csv-writer';
@@ -10,113 +10,6 @@ import createCsvWriter from 'csv-writer';
 import cron from 'node-cron';
 import nodemailer from 'nodemailer';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//------------------LOGIN ----------------//
-app.post('/login', async (req, res) => {
-  const { username, pass } = req.body;
-  // Check if username and password are provided
-  if (!username || !pass) {
-    return res.status(400).json({ status: 'error', message: 'Username and password are required' });
-  }
-
-  // Query MySQL database for user with matching username
-  const query = 'SELECT * FROM users WHERE username = ?';
-  connection.query(query, [username], (error, results, fields) => {
-    if (error) {
-      console.log('Error querying database:', error);
-      return res.status(500).json({ status: 'error', message: 'Internal server error' });
-    }
-
-    if (results.length === 0) {
-      // No user found with matching username
-      return res.json({ status: 'error', message: 'username not exist ' });
-    }
-
-    // Compare password with hash using bcrypt
-    const user = results[0];
-    if (user.password !== pass) {
-      return res.json({ status: 'error', message: 'Invalid password' });
-  
-    }
-    else {      
-      const token = jwt.sign({ username }, 'zerubabel-secret-key', { expiresIn: '1m' });
-      res.cookie('token',token)
-       return res.status(200).json({ status: 'success', message: 'successfully log in', role: user.role, username:  user.username });
-      
-
-    }
-   
-  });
-});
-
-
-
-//check login status
-const verifyUser = (req,res,next) => { 
-  const token = req.cookies.token;
-  if (!token) {
-    return res.json({ message: "no tooken so logout" })
-  }
-  else { 
-    jwt.verify(token, 'zerubabel-secret-key', (error, decode) => { 
-      if (error) { return res.json({ message: 'authentication error' }) }
-      else {
-        req.username = decode.username;
-        next();
-      }
-
-    })
-  }
-
-
-}
-
-app.get('/logincheck',verifyUser, (req, res) => { 
-  const query = 'SELECT role FROM users WHERE username = ?';
-  connection.query(query, [req.username], (error, results, fields) => {
-      if (error) {
-        console.log('Error querying database:', error);
-        return res.status(500).json({ status: 'error', message: 'Internal server error' });
-      }
-      else {
-        const role = results[0].role
-        console.log(role);
-      
-    return res.json({ status: 'success',username: req.username,role:role })
-      }
-})
-
-})
-
-// logout functionality
-app.get('/logout',(req, res)=> {
-  res.clearCookie('token')
-  return res.json({status: 'success'})
-})
-
-
-
-
-//------X-----------LOGIN -------X--------//
 
 
 
@@ -643,18 +536,19 @@ const convertToCSV = async (data) => {
       path: csvFilePath,
       header: [
         { id: 'id', title: 'ID' },
-        { id: 'product_id', title: 'product_id' },
-        { id: 'type_of_order', title: 'type_of_order' },
-        { id: 'state_of_order', title: 'state_of_order' },
-        { id: 'amount', title: 'amount' },
-        { id: 'total_price', title: 'total_price' },
-         { id: 'paid_price', title: 'paid_price' },
-        { id: 'remain_price', title: 'remain_price' },
-        { id: 'status', title: 'status' },
-        { id: 'phone', title: 'phone' },
-        { id: 'full_name', title: 'full_name' },
-        { id: 'casher_name', title: 'casher_name' },
-        { id: 'date_of_order', title: 'date_of_order' },
+        { id: 'product_id', title: 'Product ID' },
+        { id: 'kind_of_product', title: 'Kind of Product' },
+        { id: 'type_of_order', title: 'Type of Order' },
+        { id: 'state_of_order', title: 'State of Order' },
+        { id: 'amount', title: 'Amount' },
+        { id: 'total_price', title: 'Total Price' },
+        { id: 'paid_price', title: 'Paid Price' },
+        { id: 'remain_price', title: 'Remaining Price' },
+        { id: 'status', title: 'Status' },
+        { id: 'phone', title: 'Phone' },
+        { id: 'full_name', title: 'Full Name' },
+        { id: 'casher_name', title: 'Cashier Name' },
+        { id: 'date_of_order', title: 'Date of Order' },
       ],
     });
 
