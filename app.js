@@ -44,13 +44,13 @@ app.post('/addNeworders/', (req, res) => {
   paid_price = parseFloat(paid_price)
   remain_price = parseFloat(remain_price)
   let status;
-  //console.log(paid_price);
+  //console.log(form);
 
    const SQLquery='select id from products where product_name=?'
   connection.query(SQLquery, [product_name],async (error, results, fields) => {
        //res.json(results)
     if (error) console.log(error);
-  //  console.log( results[0].id);
+   console.log( results[0].id);
     if (results) { 
       product_id = results[0].id;
       const Query = "INSERT INTO `orders` (`product_id`, `kind_of_product`, `type_of_order`, `state_of_order`, `amount`, `total_price`, `paid_price`,`remain_price`, `status`, `phone`, `full_name`, `casher_name`, `date_of_order`) VALUES (?,?,?,?, ?, ?,?, ?, ?,?,?,?,?)";
@@ -84,11 +84,6 @@ app.post('/addNeworders/', (req, res) => {
         }
       }
       ) 
-
-
-
-
-
 
     }
     })
@@ -574,7 +569,7 @@ const sendEmailWithAttachment = async (csvFilePath) => {
 
     const mailOptions = {
       from: 'mihiretuhailegiyorgis@gmail.com',
-      to: 'mihiretutigistu@gmail.com',
+      to: 'enatprintingpress@gmail.com',
       subject: 'Daily Orders Report',
       text: 'Attached is the daily orders report CSV file.',
       attachments: [
